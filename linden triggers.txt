@@ -1,0 +1,155 @@
+--Linden Outlaw "Panic Button"  
+(ambulancejob/job.lua line 253ish)
+(policejob/client/main.lua line 205ish)
+
+RegisterCommand('panicbutton', function()
+    local job = ""
+    PlayerJob = QBCore.Functions.GetPlayerData().job.name
+
+    if PlayerJob == "police" or PlayerJob == "ambulance" then
+        if PlayerJob == "police" then
+            job = "Officer "
+        elseif PlayerJob == "ambulance"  then
+            job = "EMS "
+        end
+    end
+    
+    local data = {displayCode = '10-99', description = job .. "in Distress", isImportant = 1, recipientList = {'police', 'ambulance', length = '60000',}, blipSprite = 653, blipColour = 84, blipScale = 1.5, infoM = 'fa-portrait'}
+    local dispatchData = {dispatchData = data, caller = 'Alarm', coords = GetEntityCoords(PlayerPedId())}
+    TriggerServerEvent('wf-alerts:svNotify', dispatchData)
+    print(job)
+end, false)
+
+RegisterKeyMapping('panicbutton', 'Officer Down', 'keyboard', '-')
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- qb-storerobbery > server > main.lua (around line 115)
+ 
+RegisterServerEvent('qb-storerobbery:server:callCops')
+AddEventHandler('qb-storerobbery:server:callCops', function(type, safe, streetLabel, coords)
+    local data = {displayCode = '10-65', description = 'Robbery', isImportant = 0, recipientList = {'police'}, length = '10000', infoM = 'fa-info-circle', info = 'Store Robbery In Progress'}
+    local dispatchData = {dispatchData = data, caller = 'Alarm', coords = vector3(coords.x, coords.y, coords.z)}
+    TriggerEvent('wf-alerts:svNotify', dispatchData) 
+end)
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- qb-bankrobbery > server > main.lua (around line 278)
+ 
+RegisterServerEvent('qb-bankrobbery:server:callCops')
+AddEventHandler('qb-bankrobbery:server:callCops', function(type, bank, streetLabel, coords)
+    local cameraId = 4
+    local bankLabel = "Fleeca"
+    local msg = ""
+ if type == "small" then
+        cameraId = Config.SmallBanks[bank]["camId"]
+        bankLabel = "Fleeca"
+        msg = "The Alarm has been activated at "..bankLabel.. " " ..streetLabel.." (CAMERA ID: "..cameraId..")"
+        local data = {displayCode = '10-46', description = 'Bank Robbery', isImportant = 1, recipientList = {'police'}, length = '20000', infoM = 'fa-info-circle', info = 'The Alarm has been activated at '..bankLabel.. ' ' ..streetLabel..' (CAMERA ID: '..cameraId..')'}
+        local dispatchData = {dispatchData = data, caller = 'Alarm', coords = vector3(coords.x, coords.y, coords.z)}
+        TriggerEvent('wf-alerts:svNotify', dispatchData)
+    elseif type == "paleto" then
+        cameraId = Config.BigBanks["paleto"]["camId"]
+        bankLabel = "Blaine County Savings"
+        msg = "The Alarm has been activated at "..bankLabel.. " Paleto Bay (CAMERA ID: "..cameraId..")"
+        local data = {displayCode = '10-46', description = 'Bank Robbery', isImportant = 1, recipientList = {'police'}, length = '20000', infoM = 'fa-info-circle', info = 'The Alarm has been activated at '..bankLabel.. ' ' ..streetLabel..' (CAMERA ID: '..cameraId..')'}
+        local dispatchData = {dispatchData = data, caller = 'Alarm', coords = vector3(coords.x, coords.y, coords.z)}
+        TriggerEvent('wf-alerts:svNotify', dispatchData)
+    elseif type == "pacific" then
+        bankLabel = "Pacific Standard Bank"
+        msg = "The Alarm has been activated at "..bankLabel.. " Alta St (CAMERA ID: 1/2/3)"
+        local data = {displayCode = '10-46', description = 'Bank Robbery', isImportant = 1, recipientList = {'police'}, length = '20000', infoM = 'fa-info-circle', info = 'The Alarm has been activated at '..bankLabel.. ' ' ..streetLabel..' (CAMERA ID: 1/2/3)'}
+        local dispatchData = {dispatchData = data, caller = 'Alarm', coords = vector3(coords.x, coords.y, coords.z)}
+        TriggerEvent('wf-alerts:svNotify', dispatchData)
+    end
+    local alertData = {
+        title = "Bank robbery",
+        coords = {x = coords.x, y = coords.y, z = coords.z},
+        description = msg,
+    }
+    --TriggerClientEvent("qb-bankrobbery:client:robberyCall", -1, type, bank, streetLabel, coords) -- NOT SURE WHAT THIS IS???
+    TriggerClientEvent("qb-phone:client:addPoliceAlert", -1, alertData)
+end)
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- qb-ifruitstore > server > main.lua (around line 81)
+ 
+RegisterServerEvent('qb-ifruitstore:server:callCops')
+AddEventHandler('qb-ifruitstore:server:callCops', function(streetLabel, coords)
+    local data = {displayCode = '10-65', description = 'Robbery', isImportant = 0, recipientList = {'police'}, length = '10000', infoM = 'fa-info-circle', info = 'iFruit Store Robbery In Progress'}
+    local dispatchData = {dispatchData = data, caller = 'Alarm', coords = vector3(coords.x, coords.y, coords.z)}
+    TriggerEvent('wf-alerts:svNotify', dispatchData) 
+end)
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- qb-truckrobbery > server > main.lua (around line 45)
+ 
+RegisterServerEvent('qb-armoredtruckheist:server:callCops')
+AddEventHandler('qb-armoredtruckheist:server:callCops', function(streetLabel, coords)
+   local data = {displayCode = '10-31', description = 'Armed Robbery', isImportant = 0, recipientList = {'police'}, length = '10000', infoM = 'fa-info-circle', info = 'Armored Cash Transporter'}
+local dispatchData = {dispatchData = data, caller = 'Alarm', coords = vector3(coords.x, coords.y, coords.z)}
+TriggerEvent('wf-alerts:svNotify', dispatchData)
+end)
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--House Robbery > client > main.lua (line 248-298 for me)
+
+RegisterNetEvent('lockpicks:UseLockpick', function(isAdvanced)
+    local hours = GetClockHours()
+    if hours >= Config.MinimumTime or hours <= Config.MaximumTime then
+        usingAdvanced = isAdvanced
+        if usingAdvanced then
+            if closestHouse ~= nil then
+                if CurrentCops >= Config.MinimumHouseRobberyPolice then
+                    if not Config.Houses[closestHouse]["opened"] then
+                        local data = {displayCode = '10-65', description = 'Home Invasion', isImportant = 0, recipientList = {'police'}, length = '10000', infoM = 'fa-info-circle', info = 'Burglary in Progress'}
+local dispatchData = {dispatchData = data, caller = 'Alarm', coords = vector3(Config.Houses[closestHouse].coords.x, Config.Houses[closestHouse].coords.y, Config.Houses[closestHouse].coords.z)}
+TriggerServerEvent('wf-alerts:svNotify', dispatchData)
+                        TriggerEvent('qb-lockpick:client:openLockpick', lockpickFinish)
+                        if math.random(1, 100) <= 85 and not IsWearingHandshoes() then
+                            local pos = GetEntityCoords(PlayerPedId())
+                            TriggerServerEvent("evidence:server:CreateFingerDrop", pos)
+                        end
+                    else
+                        QBCore.Functions.Notify('The door is already open..', 'error', 3500)
+                    end
+                else
+                    QBCore.Functions.Notify('Not enough Police..', 'error', 3500)
+                end
+            end
+        else
+            QBCore.Functions.TriggerCallback('QBCore:HasItem', function(result)
+                if closestHouse ~= nil then
+                    if result then
+                        if CurrentCops >= Config.MinimumHouseRobberyPolice then
+                            if not Config.Houses[closestHouse]["opened"] then
+                                local data = {displayCode = '211', description = 'Robbery', isImportant = 0, recipientList = {'police'}, length = '10000', infoM = 'fa-info-circle', info = 'Vangelico Jewelry Store'}
+local dispatchData = {dispatchData = data, caller = 'Alarm', coords = vector3(Config.Houses[closestHouse].coords.x, Config.Houses[closestHouse].coords.y, Config.Houses[closestHouse].coords.z)}
+TriggerServerEvent('wf-alerts:svNotify', dispatchData)
+                                TriggerEvent('qb-lockpick:client:openLockpick', lockpickFinish)
+                                if math.random(1, 100) <= 85 and not IsWearingHandshoes() then
+                                    local pos = GetEntityCoords(PlayerPedId())
+                                    TriggerServerEvent("evidence:server:CreateFingerDrop", pos)
+                                end
+                            else
+                                QBCore.Functions.Notify('The door is already open..', 'error', 3500)
+                            end
+                        else
+                            QBCore.Functions.Notify('Not enough Police..', 'error', 3500)
+                        end
+                    else
+                        QBCore.Functions.Notify('It looks like you are missing something...', 'error', 3500)
+                    end
+                end
+            end, "screwdriverset")
+        end
+    end
+end)
